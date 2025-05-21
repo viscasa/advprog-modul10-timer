@@ -31,3 +31,14 @@ Akibatnya, urutan output menjadi:
 3. Setelah timer selesai, task dibangunkan dan dilanjutkan, lalu mencetak `"done!"`.
 
 Ini mencerminkan bagaimana mekanisme asynchronous Rust bekerja: future tidak langsung dieksekusi, melainkan dipoll oleh executor, dan executor akan mengatur lifecycle dari setiap future.
+
+__1.3: Multiple Spawn and removing drop__
+
+<div align="center">
+    <img src="assets/images/foto2.jpg" alt="foto"/>
+</div>
+
+* Tugas-tugas asynchronous dikemas sebagai future dan disusun ke dalam queue oleh `Spawner`.
+* `Executor` memproses future satu per satu, dan jika future belum selesai (`Pending`), ia ditaruh kembali untuk diproses ulang saat dibangunkan (`wake()`).
+* Karena semua future menggunakan `TimerFuture` yang sama durasinya, maka hasil akhir terlihat berurutan dari awal (`howdy...`) dan akhir (`done...`), tapi semua `await` tidak menghalangi eksekusi tugas lain.
+* Tanpa `drop(spawner)`, executor akan menunggu di kanal, menganggap masih ada kemungkinan task baru. Walaupun aman di contoh ini, hal ini **bisa memicu deadlock atau hang** di sistem nyata.
